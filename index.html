@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kenali Frasa Sendi Nama - Whack-A-Mole</title>
+    <style>
+        /* =========================================
+           GAYA CSS (REKA BENTUK VISUAL)
+           ========================================= */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap');
+
+        :root {
+            --primary: #4CAF50;
+            --sky: #87CEEB;
+            --grass: #7CFC00;
+            --dirt: #654321;
+            --hole-color: #3e2723;
+            --text-main: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--sky) 0%, var(--sky) 40%, var(--primary) 40%, var(--grass) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-main);
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            max-height: 900px;
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* Skrin UI */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.9);
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: #FF5722;
+            font-size: 3rem;
+            text-align: center;
+            text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        button {
+            font-family: 'Fredoka One', cursive;
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #F57C00;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #F57C00;
+        }
+
+        /* Header Permainan */
+        #game-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: #FFF;
+            border-bottom: 4px solid #E0E0E0;
+            font-weight: 800;
+            font-size: 1.2rem;
+            align-items: center;
+        }
+
+        .stat-box {
+            background: #FFF9C4;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 2px solid #FBC02D;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #mute-btn {
+            background: #E0E0E0;
+            color: #333;
+            padding: 5px 15px;
+            font-size: 1rem;
+            box-shadow: 0 4px 0 #BDBDBD;
+        }
+        #mute-btn:active { box-shadow: 0 0 0 #BDBDBD; transform: translateY(4px); }
+
+        /* Bahagian Soalan */
+        #question-section {
+            background: #FFF;
+            margin: 15px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 3px solid #2196F3;
+        }
+
+        #question-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1976D2;
+            margin-bottom: 15px;
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .option-item {
+            background: #E3F2FD;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: 2px solid #BBDEFB;
+            display: flex;
+            align-items: center;
+        }
+        .opt-letter {
+            background: #2196F3;
+            color: white;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        /* Papan Permainan (Game Board) */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 10px;
+            margin: 10px auto 0;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .hole-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            overflow: hidden;
+            padding-bottom: 5px;
+        }
+
+        .hole {
+            width: 85%;
+            height: 35%;
+            background: #271610;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 5px;
+            box-shadow: inset 0 10px 15px rgba(0,0,0,0.9);
+        }
+
+        .mole {
+            width: 70%;
+            height: 90%;
+            background: #795548;
+            border-radius: 45% 45% 10% 10%;
+            position: absolute;
+            bottom: -100%;
+            transition: bottom 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 10px;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4);
+            border: 2px solid #5D4037;
+            border-bottom: none;
+        }
+
+        .mole.up {
+            bottom: 10%;
+        }
+
+        /* Wajah Tikus */
+        .mole-face {
+            font-size: clamp(40px, 15vw, 80px);
+            line-height: 1.1;
+            pointer-events: none;
+        }
+
+        /* Label Huruf pada Tikus */
+        .mole-label {
+            background: #FFEB3B;
+            color: #D84315;
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(16px, 6vw, 28px);
+            width: clamp(35px, 12vw, 55px);
+            height: clamp(35px, 12vw, 55px);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 3px solid #FFF;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            pointer-events: none;
+            margin-top: 2px;
+        }
+
+        /* Efek Terapung (Floating Text) */
+        .floating-text {
+            position: absolute;
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            z-index: 50;
+            text-shadow: 2px 2px 0 #FFF;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        /* Responsif untuk skrin kecil */
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            #question-text { font-size: 1.1rem; }
+            .option-item { font-size: 0.85rem; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- SKRIN MULA -->
+        <div id="start-screen" class="screen">
+            <h1>Kenali Frasa Sendi Nama</h1>
+            <p class="subtitle">Pukul tikus yang membawa jawapan yang BETUL!</p>
+            <button onclick="startGame()">Mula Main</button>
+        </div>
+
+        <!-- SKRIN PERMAINAN -->
+        <div id="game-container" style="height: 100%; display: flex; flex-direction: column;">
+            
+            <div id="game-header">
+                <div class="stat-box">
+                    <span>⭐ Skor:</span>
+                    <span id="score-display">0</span>
+                </div>
+                <button id="mute-btn" onclick="toggleMute()">🔊 Bising</button>
+            </div>
+
+            <div id="question-section">
+                <div id="question-text">Soalan dimuatkan...</div>
+                <div id="options-container">
+                    <!-- Pilihan jawapan dijana di sini -->
+                </div>
+            </div>
+
+            <div id="game-board">
+                <!-- 9 Lubang dijana secara automatik -->
+            </div>
+            
+        </div>
+
+        <!-- SKRIN TAMAT -->
+        <div id="end-screen" class="screen hidden">
+            <h1>Permainan Tamat!</h1>
+            <p class="subtitle" id="final-message">Tahniah!</p>
+            <div class="stat-box" style="font-size: 2rem; margin-bottom: 30px;">
+                ⭐ Skor Akhir: <span id="final-score">0</span>
+            </div>
+            <button onclick="resetGame()">Main Semula</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           DATA SOALAN (Berdasarkan Prompt)
+           ========================================= */
+        const questions = [
+            {
+                question: "Yang manakah frasa sendi nama?",
+                options: ["Amat tinggi", "Di dalam kelas", "Buku cerita seram", "Mengemas kelas"],
+                answer: 1 // Indeks 1 bermaksud B (Di dalam kelas)
+            },
+            {
+                question: "Yang manakah frasa sendi nama?",
+                options: ["Amat rajin", "Budak lelaki yang kacak", "Ke sekolah", "Berlari laju"],
+                answer: 2 // C
+            },
+            {
+                question: "Manakah BUKAN frasa sendi nama?",
+                options: ["Di atas meja", "Daripada kayu jati", "Untuk kawan baik saya", "Sangat harum"],
+                answer: 3 // D
+            },
+            {
+                question: "Pilih frasa sendi nama yang betul.",
+                options: ["Kepada ibu bapa saya", "Terlalu manis", "Rumah yang besar", "Membaca buku baharu"],
+                answer: 0 // A
+            },
+            {
+                question: "‘Dari SK Gombak Utara’ merupakan frasa sendi nama.",
+                options: ["Betul", "Salah", "", ""],
+                answer: 0 // A
+            },
+            {
+                question: "Ayat manakah mengandungi frasa sendi nama?",
+                options: ["Ali sangat rajin.", "Buku itu mahal.", "Mereka di restoran.", "Adik bermain bola."],
+                answer: 2 // C
+            },
+            {
+                question: "Pilih ayat yang tidak mengandungi frasa sendi nama.",
+                options: [
+                    "Kereta baharu itu di rumahnya.",
+                    "Sedekah itu diberikan kepada anak yatim.",
+                    "Bola itu di bawah meja.",
+                    "Hari ini merupakan hari lahir Mina."
+                ],
+                answer: 3 // D
+            }
+        ];
+
+        /* =========================================
+           SISTEM AUDIO (Web Audio API Synthesizer)
+           Dibuat supaya tiada fail audio luaran rosak
+           ========================================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isMuted = false;
+        let bgmInterval;
+        const notesBGM = [392, 523.25, 659.25, 523.25]; // Melodi ceria
+        let bgmIndex = 0;
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if(isMuted) return;
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Kesan bunyi khusus
+        const soundFx = {
+            pop: () => playTone(600, 'sine', 0.1, 0.05),
+            hit: () => playTone(150, 'square', 0.1, 0.2),
+            correct: () => {
+                playTone(880, 'sine', 0.1, 0.1);
+                setTimeout(() => playTone(1108, 'sine', 0.2, 0.1), 100);
+            },
+            wrong: () => {
+                playTone(300, 'sawtooth', 0.2, 0.1);
+                setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.1), 150);
+            },
+            win: () => {
+                playTone(523.25, 'triangle', 0.2, 0.1);
+                setTimeout(() => playTone(659.25, 'triangle', 0.2, 0.1), 200);
+                setTimeout(() => playTone(783.99, 'triangle', 0.4, 0.1), 400);
+            }
+        };
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('mute-btn');
+            btn.innerText = isMuted ? '🔇 Senyap' : '🔊 Bising';
+        }
+
+        /* =========================================
+           STATE & LOGIK PERMAINAN
+           ========================================= */
+        const LETTERS = ['A', 'B', 'C', 'D'];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let activeLetters = []; // Huruf yang sah untuk soalan semasa
+        
+        let spawnInterval;
+        let isPlaying = false;
+
+        // Elemen DOM
+        const scoreDisplay = document.getElementById('score-display');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const board = document.getElementById('game-board');
+
+        // Bina 4 Lubang di atas Papan
+        function buildBoard() {
+            board.innerHTML = '';
+            for(let i=0; i<4; i++) {
+                const container = document.createElement('div');
+                container.className = 'hole-container';
+                
+                const hole = document.createElement('div');
+                hole.className = 'hole';
+                
+                const mole = document.createElement('div');
+                mole.className = 'mole';
+                mole.onclick = (e) => handleMoleClick(mole, e);
+                
+                const face = document.createElement('div');
+                face.className = 'mole-face';
+                face.innerText = '🐭';
+                
+                const label = document.createElement('div');
+                label.className = 'mole-label';
+                
+                mole.appendChild(face);
+                mole.appendChild(label);
+                container.appendChild(hole);
+                container.appendChild(mole);
+                board.appendChild(container);
+            }
+        }
+
+        function startGame() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            buildBoard();
+            
+            score = 0;
+            currentQuestionIndex = 0;
+            updateScoreDisplay();
+            
+            isPlaying = true;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Jika soalan habis
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            questionText.innerText = `Soalan ${currentQuestionIndex + 1}: ${q.question}`;
+            
+            // Papar Pilihan Jawapan
+            optionsContainer.innerHTML = '';
+            activeLetters = [];
+            
+            q.options.forEach((opt, index) => {
+                if (opt.trim() !== "") { // Abai pilihan kosong (untuk soalan Betul/Salah)
+                    activeLetters.push(LETTERS[index]);
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'option-item';
+                    optDiv.innerHTML = `<span class="opt-letter">${LETTERS[index]}</span> ${opt}`;
+                    optionsContainer.appendChild(optDiv);
+                }
+            });
+
+            // Mula keluarkan tikus
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(spawnMole, 900); // Tikus keluar setiap 0.9s
+        }
+
+        function spawnMole() {
+            if (!isPlaying) return;
+
+            const moles = document.querySelectorAll('.mole');
+            // Turunkan semua tikus
+            moles.forEach(m => m.classList.remove('up'));
+
+            // Pilih lubang rawak
+            const randomHoleIndex = Math.floor(Math.random() * moles.length);
+            const selectedMole = moles[randomHoleIndex];
+
+            // Pilih huruf rawak dari pilihan yang sah
+            const randomLetter = activeLetters[Math.floor(Math.random() * activeLetters.length)];
+            
+            const label = selectedMole.querySelector('.mole-label');
+            label.innerText = randomLetter;
+            selectedMole.dataset.letter = randomLetter;
+
+            // Naikkan tikus
+            selectedMole.classList.add('up');
+            soundFx.pop();
+
+            // Turunkan automatik selepas 1-1.5 saat
+            const hideTime = Math.random() * 500 + 1000;
+            setTimeout(() => {
+                if (selectedMole.classList.contains('up')) {
+                    selectedMole.classList.remove('up');
+                }
+            }, hideTime);
+        }
+
+        function handleMoleClick(mole, event) {
+            if (!mole.classList.contains('up')) return; // Abaikan jika tikus di bawah
+
+            mole.classList.remove('up'); // Tikus terus sembunyi bila dipukul
+            soundFx.hit();
+
+            const clickedLetter = mole.dataset.letter;
+            const currentQ = questions[currentQuestionIndex];
+            const correctLetter = LETTERS[currentQ.answer];
+
+            if (clickedLetter === correctLetter) {
+                // Jawapan Betul
+                score += 10;
+                soundFx.correct();
+                showFloatingText("+10 ⭐", event.clientX, event.clientY, '#4CAF50');
+                
+                // Berhenti sementara sebelum soalan seterusnya
+                clearInterval(spawnInterval);
+                
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    loadQuestion();
+                }, 1000);
+
+            } else {
+                // Jawapan Salah
+                score -= 5;
+                if(score < 0) score = 0; // Tiada markah negatif
+                soundFx.wrong();
+                showFloatingText("-5 ❌", event.clientX, event.clientY, '#F44336');
+            }
+            updateScoreDisplay();
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.innerText = score;
+            // Animasi kecil pada skor
+            scoreDisplay.style.transform = "scale(1.5)";
+            setTimeout(() => scoreDisplay.style.transform = "scale(1)", 200);
+        }
+
+        function showFloatingText(msg, x, y, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = msg;
+            el.style.left = (x - 30) + 'px';
+            el.style.top = (y - 30) + 'px';
+            el.style.color = color;
+            document.body.appendChild(el);
+
+            setTimeout(() => el.remove(), 1000); // Buang selepas animasi tamat
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(spawnInterval);
+            soundFx.win();
+
+            const endScreen = document.getElementById('end-screen');
+            document.getElementById('final-score').innerText = score;
+            
+            const msgEl = document.getElementById('final-message');
+            if (score > 50) msgEl.innerText = "Hebat! Anda sangat mahir!";
+            else if (score > 20) msgEl.innerText = "Bagus! Teruskan usaha!";
+            else msgEl.innerText = "Jangan putus asa, cuba lagi!";
+
+            endScreen.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+    </script>
+</body>
+</html>
